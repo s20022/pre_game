@@ -6,54 +6,114 @@
 <body>
 
 <script>
-  var config = {
+  let game;
+
+  let gameOptions = {
+    platformSpeedRange: [300,300],
+
+    spawnRange: [80, 300],
+
+    platformHeightRnage: [-5, 5],
+
+    platformHeighScale: 20,
+
+    platformVerticalLimit: [0.4, 0.8],
+
+    playerGravity: 900,
+
+    jumpForce: 400,
+
+    playerStartPosition: 200,
+
+    jumps: 2,
+
+    coinPercent: 25
+  }
+
+  window.onload = function() {
+  let gameConfig = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    scene: [preloadGame, playGame],
     physics: {
-      default: 'arcade',
-      arcade: {
-        gravity: { y: 300 },
-        debug: false
-      }
-    },
-    scene: {
-      preload: preload,
-      create: create,
-      update: update
+      default: "arcade"
     }
-  };
+  }
 
-  var game = new Phaser.Game(config);
-
-  function preload ()
-  {
-    this.load.image('sky', 'assets/sky.png');
-    this.load.image('coin', 'assets/coin.png');
-    this.load.image('ground', 'assets/ground2.png');
-    this.load.image('you', 'assets/yusya.png');
+  game = new Phaser.Game(gameConfig);
+  wondow.focus();
+  resize();
+  window.addEventListener("resize", resize, false)
 
   }
 
-  var platforms;
+  //ゲーム開始前の定義
+  class preloadGame extends Phaser.Scene {
+    constructor() {
+      super("PreloadGame");
+    }
 
-  function create ()
-  {
-    this.add.image(400,300, 'sky');
+    preload() {
+      this.load.image('sky', 'assets/sky.png');
+      this.load.image('coin', 'assets/coin.png');
+      this.load.image('ground', 'assets/ground3.png');
+      this.load.spritesheet('you', 'assets/kisi_kirinuki.png', {
+        frameWidth: 32, frameHeight: 32
+      });
+    }
 
-    platforms = this.physics.add.staticGroup();
+//ゲーム開始時に呼び出されるもの
 
-    platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-
-  player = this.add.image(100,450, 'you');
-
-  player.setBounce(0.2);
-  player.setCollideWordBounds(true);
-  this.physics.add.collider(player, platforms);
+    create() {
+      this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('you', {start: 0, end: 2}),
+        frameRate: 10,
+        repeat: -1
+      });
+    }
   }
-  function update ()
-  {
 
+    class playGame extends Phaser.Scene{
+      constructor() {
+        super("PlayGame");
+      }
+
+      create(){
+        this.platformGroup = this.add.group({
+          removeCallback: function (platform){
+            platform.scene.platformPool.add(platform)
+          }
+        });
+
+        this.platformPool = this.add.group({
+          removeCallback: function (platForm) {
+            platform.scene.platformGroup.add(platform)
+          }
+        });
+        this.coinGroup = this.add.group({
+          removeCallback: function (coin){
+            coin.scene.coinPool.add(coin)
+          }
+        });
+
+        this.coinPool = this.add.group({
+          removeCallback: function (coin){
+            coin.scene.coinGroup.add(coin)
+          }
+        });
+
+        this.addedPlatforms = 0;
+
+        this.playerJumps = 0;
+
+        this.addPlatform(game.config.width, game.config.width / 2, game.config.height * 0.7, "player");
+        this.player.setGravityY(gameOptions.playerGravity);
+        this.player.setDepth(2);
+
+
+      }
   }
 </script>
 
