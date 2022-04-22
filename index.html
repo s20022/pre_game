@@ -11,55 +11,75 @@
   let gameOptions = {
     platformSpeedRange: [300,300],
 
-    spawnRange: [80, 300],
+    //これいじるといい感じに重なった障害物作れるかも
+    spawnRange: [0, 0],
 
-    platformHeightRnage: [-5, 5],
+    platformSizeRange: [40,30],
 
-    platformHeighScale: 20,
+    platformHeightRange: [0, 0],
+
+    platformHeightScale: 20,
 
     platformVerticalLimit: [0.4, 0.8],
 
-    playerGravity: 900,
+    //ブロックの位置範囲
+    blockVerticalLimit: [1,1],
 
-    jumpForce: 400,
+    blockSizeRange: [40,30],
+
+    //コレいじると障害物の位置調整できるかも
+    blockHeightRange: [10,10],
+
+    blockSpeedRange: [300,300],
+
+    playerGravity: 1000,
+
+    jumpForce: 650,
 
     playerStartPosition: 200,
 
     jumps: 2,
 
-    coinPercent: 25
+    coinPercent: 50,
+
+    blockPercent: 40,
+
+    coinPosition: [95, 200]
   }
 
   window.onload = function() {
   let gameConfig = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: 1334,
+    height: 750,
     scene: [preloadGame, playGame],
+    backgroundColor: 0x0c88c7,
     physics: {
       default: "arcade"
     }
   }
-
-  game = new Phaser.Game(gameConfig);
-  wondow.focus();
-  resize();
-  window.addEventListener("resize", resize, false)
+    game = new Phaser.Game(gameConfig);
+    window.focus();
+    resize();
+    window.addEventListener("resize", resize, false)
 
   }
 
-  //ゲーム開始前の定義
   class preloadGame extends Phaser.Scene {
     constructor() {
       super("PreloadGame");
     }
 
     preload() {
+      this.load.image('block', 'assets/kabe.png');
+      this.load.image('block2', 'assets/kabe2.png');
+      this.load.image('block3', 'assets/kabe3.png')
       this.load.image('sky', 'assets/sky.png');
       this.load.image('coin', 'assets/coin.png');
       this.load.image('ground', 'assets/ground3.png');
-      this.load.spritesheet('you', 'assets/kisi_kirinuki.png', {
-        frameWidth: 32, frameHeight: 32
+      this.load.spritesheet('you', 'assets/piyoplayer1.png', {
+        frameWidth: 32,
+        frameHeight: 32
       });
     }
 
@@ -67,53 +87,371 @@
 
     create() {
       this.anims.create({
-        key: 'right',
+        key: 'run',
         frames: this.anims.generateFrameNumbers('you', {start: 0, end: 2}),
         frameRate: 10,
         repeat: -1
       });
+
+      this.scene.start("PlayGame")
+
     }
   }
 
-    class playGame extends Phaser.Scene{
-      constructor() {
-        super("PlayGame");
+  class playGame extends Phaser.Scene {
+    constructor() {
+      super("PlayGame");
+    }
+
+    create() {
+      this.platformGroup = this.add.group({
+        removeCallback: function (platform) {
+          platform.scene.platformPool.add(platform)
+        }
+      });
+
+      this.platformPool = this.add.group({
+        removeCallback: function (platform) {
+          platform.scene.platformGroup.add(platform)
+        }
+      });
+      this.coinGroup = this.add.group({
+        removeCallback: function (coin) {
+          coin.scene.coinPool.add(coin)
+        }
+      });
+
+      this.coinPool = this.add.group({
+        removeCallback: function (coin) {
+          coin.scene.coinGroup.add(coin)
+        }
+      });
+
+      this.blockGroup = this.add.group({
+        removeCallback: function (block) {
+          block.scene.blockPool.add(block)
+        }
+      });
+
+      this.blockPool = this.add.group({
+        removeCallback: function (block) {
+          block.scene.blockGroup.add(block)
+        }
+      });
+
+      this.block2Group = this.add.group({
+        removeCallback: function (block2) {
+          block2.scene.block2Pool.add(block2)
+        }
+      });
+
+      this.block2Pool = this.add.group({
+        removeCallback: function (block2) {
+          block2.scene.block2Group.add(block2)
+        }
+      });
+
+      this.block3Group = this.add.group({
+        removeCallback: function (block3) {
+          block3.scene.block3Pool.add(block3)
+        }
+      });
+
+      this.block3Pool = this.add.group({
+        removeCallback: function (block3) {
+          block3.scene.block3Group.add(block3)
+        }
+      });
+
+      this.addedPlatforms = 0;
+
+      this.playerJumps = 0;
+
+      this.addPlatform(game.config.width, game.config.width / 2, game.config.height * gameOptions.platformVerticalLimit[1]);
+
+      this.player = this.physics.add.sprite(gameOptions.playerStartPosition, game.config.height * 0.7, "you")
+      this.player.setGravityY(gameOptions.playerGravity);
+      this.player.setDepth(2);
+
+      this.platformCollider = this.physics.add.collider(this.player, this.platformGroup, function () {
+
+        if (!this.player.anims.isPlaying) {
+          this.player.anims.play("run");
+        }
+      }, null, this);
+
+      this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
+
+        this.tweens.add({
+          targets: coin,
+          y: coin.y - 100,
+          alpha: 0,
+          duration: 800,
+          ease: "Cubic.easeOut",
+          callbackScope: this,
+          onComplete: function() {
+            this.coinGroup.killAndHide(coin);
+            this.coinGroup.remove(coin);
+          }
+        });
+
+      }, null, this);
+
+
+      this.blockCollider = this.physics.add.collider(this.player, this.blockGroup, function () {
+        if (!this.player.anims.isPlaying) {
+          this.player.anims.play("run");
+        }
+      }, null, this);
+
+      this.physics.add.overlap(this.player, this.coinGroup,function (player, coin) {
+
+        this.tweens.add({
+          targets: coin,
+          y: coin.y - 100,
+          alpha: 0,
+          duration: 800,
+          ease: "Cubic.easeOut",
+          callbackScope: this,
+          onComplete: function() {
+            this.coinGroup.killAndHide(coin);
+            this.coinGroup.remove(coin);
+          }
+        });
+
+      }, null, this);
+
+      this.block2Collider = this.physics.add.collider(this.player, this.block2Group, function () {
+
+        if (!this.player.anims.isPlaying) {
+          this.player.anims.play("run");
+        }
+      }, null, this);
+
+      this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
+
+        this.tweens.add({
+          targets: coin,
+          y: coin.y - 100,
+          alpha: 0,
+          duration: 800,
+          ease: "Cubic.easeOut",
+          callbackScope: this,
+          onComplete: function() {
+            this.coinGroup.killAndHide(coin);
+            this.coinGroup.remove(coin);
+          }
+        });
+
+      }, null, this);
+
+      this.block3Collider = this.physics.add.collider(this.player, this.block3Group, function () {
+
+        if (!this.player.anims.isPlaying) {
+          this.player.anims.play("run");
+        }
+      }, null, this);
+
+      this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
+
+        this.tweens.add({
+          targets: coin,
+          y: coin.y - 100,
+          alpha: 0,
+          duration: 800,
+          ease: "Cubic.easeOut",
+          callbackScope: this,
+          onComplete: function() {
+            this.coinGroup.killAndHide(coin);
+            this.coinGroup.remove(coin);
+          }
+        });
+
+      }, null, this);
+      //こっから
+
+      this.input.on("pointerdown", this.jump, this);
+    }
+
+    addPlatform(platformWidth, posX, posY) {
+      this.addedPlatforms++;
+      let platform;
+      if (this.platformPool.getLength()) {
+        platform = this.platformPool.getFirst();
+        platform.x = posX;
+        platform.y = posY;
+        platform.active = true;
+        platform.visible = true;
+        this.platformPool.remove(platform);
+        let newRatio = platformWidth / platform.displayWidth;
+        platform.displayWidth = platformWidth;
+        platform.tileScaleX = 1 / platform.scaleX;
+      } else {
+        platform = this.add.tileSprite(posX, posY, platformWidth, 32, "ground");
+        this.physics.add.existing(platform);
+        platform.body.setImmovable(true);
+        platform.body.setVelocityX(Phaser.Math.Between(gameOptions.platformSpeedRange[0], gameOptions.platformSpeedRange[1]) * -1);
+        platform.setDepth(2);
+        this.platformGroup.add(platform);
       }
 
-      create(){
-        this.platformGroup = this.add.group({
-          removeCallback: function (platform){
-            platform.scene.platformPool.add(platform)
+      this.nextPlatformDistance = Phaser.Math.Between(gameOptions.spawnRange[0], gameOptions.spawnRange[1]);
+
+      if (this.addedPlatforms > 1) {
+
+        if (Phaser.Math.Between(1, 100) <= gameOptions.coinPercent) {
+          if (this.coinPool.getLength()) {
+            let coin = this.coinPool.getFirst();
+            coin.x = posX;
+            coin.y = posY - 96;
+            coin.alpha = 1;
+            coin.active = true;
+            coin.visible = true;
+            coin.coinPosition = Phaser.Math.Between(95, 100);
+            this.coinPool.remove(coin);
+          } else {
+            let coin = this.physics.add.sprite(posX, posY - gameOptions.coinPosition, "coin");
+            coin.setImmovable(true);
+            coin.setVelocityX(platform.body.velocity.x);
+            coin.setDepth(2);
+            this.coinGroup.add(coin);
           }
-        });
+        }
 
-        this.platformPool = this.add.group({
-          removeCallback: function (platForm) {
-            platform.scene.platformGroup.add(platform)
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
+          if (this.blockPool.getLength()) {
+            let block = this.blockPool.getFirst();
+            block.x = posX;
+            block.y = posY - 96;
+            block.alpha = 1;
+            block.active = true;
+            block.visible = true;
+            this.blockPool.remove(block);
+
+          } else {
+            let block = this.physics.add.sprite(posX, posY - 30, "block");
+            block.setImmovable(true);
+            block.setVelocityX(platform.body.velocity.x);
+            block.setDepth(2);
+            this.blockGroup.add(block);
+           // this.physics.add.collider(this.blockGroup, staticGroup);
           }
-        });
-        this.coinGroup = this.add.group({
-          removeCallback: function (coin){
-            coin.scene.coinPool.add(coin)
+        }
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
+          if (this.block2Pool.getLength()) {
+            let block2 = this.block2Pool.getFirst();
+            block2.x = posX;
+            block2.y = posY - 96;
+            block2.alpha = 1;
+            block2.active = true;
+            block2.visible = true;
+            this.block2Pool.remove(block2);
+
+          } else {
+            let block2 = this.physics.add.sprite(posX, posY - 45, "block2");
+            block2.setImmovable(true);
+            block2.setVelocityX(platform.body.velocity.x);
+            block2.setDepth(2);
+            this.blockGroup.add(block2);
+           // this.physics.add.collider(this.block2Group, staticGroup);
+            //aaa
           }
-        });
+        }
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
+          if (this.block3Pool.getLength()) {
+            let block3 = this.block3Pool.getFirst();
+            block3.x = posX;
+            block3.y = posY - 96;
+            block3.alpha = 1;
+            block3.active = true;
+            block3.visible = true;
+            this.block3Pool.remove(block3);
 
-        this.coinPool = this.add.group({
-          removeCallback: function (coin){
-            coin.scene.coinGroup.add(coin)
+          } else {
+            let block3 = this.physics.add.sprite(posX, posY - 60, "block3");
+            block3.setImmovable(true);
+            block3.setVelocityX(platform.body.velocity.x);
+            block3.setDepth(2);
+            this.blockGroup.add(block3);
+            //this.physics.add.collider(this.block3Group, staticGroup);
+
           }
-        });
-
-        this.addedPlatforms = 0;
-
-        this.playerJumps = 0;
-
-        this.addPlatform(game.config.width, game.config.width / 2, game.config.height * 0.7, "player");
-        this.player.setGravityY(gameOptions.playerGravity);
-        this.player.setDepth(2);
-
-
+        }
       }
+    }
+
+
+    jump() {
+      if (this.player.body.touching.down || (this.playerJumps > 0 && this.playerJumps < gameOptions.jumps)) {
+        if (this.player.body.touching.down) {
+          this.playerJumps = 0;
+        }
+        this.player.setVelocityY(gameOptions.jumpForce * -1);
+        this.playerJumps++;
+
+        this.player.anims.stop();
+      }
+    }
+
+    update() {
+      if (this.player.y > game.config.height) {
+        this.scene.start("PlayGame");
+      }
+      this.player.x = gameOptions.playerStartPosition;
+
+      let minDistance = game.config.width;
+      let rightmostPlatformHeight = 0;
+      this.platformGroup.getChildren().forEach(function (platform) {
+        let platformDistance = game.config.width - platform.x - platform.displayWidth / 2;
+        if (platformDistance < minDistance) {
+          minDistance = platformDistance;
+          rightmostPlatformHeight = platform.y;
+        }
+        if (platform.x < -platform.displayWidth / 2) {
+          this.platformGroup.killAndHide(platform);
+          this.platformGroup.remove(platform);
+        }
+      }, this);
+
+      let minBlockDistance = game.config.width;
+      let rightmostBlockHeight = 0;
+      this.blockGroup.getChildren().forEach(function (block) {
+        let blockDistance = game.config.width - block.x - block.displayWidth / 2;
+        if (blockDistance < minBlockDistance) {
+          minBlockDistance = blockDistance;
+          rightmostBlockHeight = block.y;
+        }
+        if (block.x < -block.displayWidth / 2) {
+          this.platformGroup.killAndHide(block);
+          this.platformGroup.remove(block);
+        }
+      }, this);
+
+      if (minDistance > this.nextPlatformDistance) {
+        let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
+        let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0],
+                gameOptions.platformHeightRange[1]);
+        let nextPlatformGap = rightmostPlatformHeight + platformRandomHeight;
+        let minPlatformHeight = game.config.height * gameOptions.platformVerticalLimit[0];
+        let maxPlatformHeight = game.config.height * gameOptions.platformVerticalLimit[1];
+        let nextPlatformHeight = Phaser.Math.Clamp(nextPlatformGap, minPlatformHeight, maxPlatformHeight);
+        this.addPlatform(nextPlatformWidth, game.config.width + nextPlatformWidth / 3, nextPlatformHeight);
+      }
+    }
+  }
+  function resize(){
+    let canvas = document.querySelector("canvas");
+    let windowWidth = window.innerWidth;
+    let windowHeight = window.innerHeight;
+    let windowRatio = windowWidth / windowHeight;
+    let gameRatio = game.config.width / game.config.height;
+    if(windowRatio < gameRatio) {
+      canvas.style.width = windowWidth + "px";
+      canvas.style.height = (windowWidth / gameRatio) + "px";
+    }else{
+      canvas.style.width = (windowHeight * gameRatio) + "px";
+      canvas.style.height = windowHeight + "px";
+    }
   }
 </script>
 
