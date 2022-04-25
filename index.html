@@ -176,6 +176,8 @@
       this.player = this.physics.add.sprite(gameOptions.playerStartPosition, game.config.height * 0.7, "you")
       this.player.setGravityY(gameOptions.playerGravity);
       this.player.setDepth(2);
+      this.player.setVelocityX(300);
+      //this.player.setimmovable(true);
 
       this.blockhit = false;
 
@@ -205,7 +207,6 @@
 
 
       this.blockCollider = this.physics.add.collider(this.player, this.blockGroup, function () {
-        this.blockhit = true;
         if (!this.player.anims.isPlaying) {
           this.player.anims.play("run");
         }
@@ -328,7 +329,7 @@
             block.setVelocityX(platform.body.velocity.x);
             block.setDepth(2);
             this.blockGroup.add(block);
-           // this.physics.add.collider(this.blockGroup, staticGroup);
+           // this.blockGroup.body.checkCollision.left = true;
           }
         }
         if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
@@ -347,7 +348,7 @@
             block2.setVelocityX(platform.body.velocity.x);
             block2.setDepth(2);
             this.blockGroup.add(block2);
-           // this.physics.add.collider(this.block2Group, staticGroup);
+            //this.physics.add.collider(this.block2Group, staticGroup);
             //aaa
           }
         }
@@ -387,18 +388,11 @@
       }
     }
 
-
-    blockHits() {
-      this.player.setVelocityX(-300);
-
-      this.player.anims.stop();
-    }
-
     update() {
       if (this.player.y > game.config.height) {
         this.scene.start("PlayGame");
       }
-      this.player.x = gameOptions.playerStartPosition;
+     // this.player.x = gameOptions.playerStartPosition;
 
       let minDistance = game.config.width;
       let rightmostPlatformHeight = 0;
