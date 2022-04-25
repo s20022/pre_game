@@ -36,6 +36,8 @@
 
     jumpForce: 650,
 
+    jumpSpeed: 0,
+
     playerStartPosition: 200,
 
     jumps: 2,
@@ -176,7 +178,7 @@
       this.player = this.physics.add.sprite(gameOptions.playerStartPosition, game.config.height * 0.7, "you")
       this.player.setGravityY(gameOptions.playerGravity);
       this.player.setDepth(2);
-      this.player.setVelocityX(300);
+
       //this.player.setimmovable(true);
 
       this.blockhit = false;
@@ -186,6 +188,7 @@
         if (!this.player.anims.isPlaying) {
           this.player.anims.play("run");
         }
+        this.player.setVelocityX(300);
       }, null, this);
 
       this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
@@ -210,6 +213,7 @@
         if (!this.player.anims.isPlaying) {
           this.player.anims.play("run");
         }
+        this.player.setVelocityX(300);
       }, null, this);
 
       this.block2Collider = this.physics.add.collider(this.player, this.block2Group, function () {
@@ -217,6 +221,7 @@
         if (!this.player.anims.isPlaying) {
           this.player.anims.play("run");
         }
+        this.player.setVelocityX(300);
       }, null, this);
 
 
@@ -225,6 +230,7 @@
         if (!this.player.anims.isPlaying) {
           this.player.anims.play("run");
         }
+        this.player.setVelocityX(300);
       }, null, this);
       this.input.on("pointerdown", this.jump, this);
 
@@ -381,10 +387,18 @@
         if (this.player.body.touching.down) {
           this.playerJumps = 0;
         }
-        this.player.setVelocityY(gameOptions.jumpForce * -1);
-        this.playerJumps++;
 
+        this.player.setVelocityY(gameOptions.jumpForce * -1);
+        this.player.setVelocityX(gameOptions.jumpSpeed);
+        this.playerJumps++;
         this.player.anims.stop();
+      }
+
+    }
+
+    run(){
+      if (this.player.body.touching.down){
+        this.player.setVelocityX(300);
       }
     }
 
