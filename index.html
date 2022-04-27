@@ -42,6 +42,8 @@
 
     playerDeadZone: -200,
 
+    playerScoreResetPoint: -198,
+
     jumps: 2,
 
     coinPercent: 2,
@@ -78,6 +80,10 @@
     window.addEventListener("resize", resize, false)
 
   }
+
+  let score = 0;
+  let scoreText;
+
 
   class preloadGame extends Phaser.Scene {
     constructor() {
@@ -177,6 +183,8 @@
         }
       });
 
+      this.deadFlag = false;
+
       this.addedPlatforms = 0;
 
       //this.addedBlock = 0;
@@ -191,10 +199,6 @@
       this.player = this.physics.add.sprite(gameOptions.playerStartPosition, game.config.height * 0.7, "you")
       this.player.setGravityY(gameOptions.playerGravity);
       this.player.setDepth(2);
-
-      let coinScore = 0;
-
-
       this.platformCollider = this.physics.add.collider(this.player, this.platformGroup, function () {
 
         if (!this.player.anims.isPlaying) {
@@ -203,7 +207,11 @@
         this.player.setVelocityX(300);
       }, null, this);
 
+      scoreText = this.add.text(30,30, 'Coin✕0', { fontSize: '40px',fill: '#000'});
+
+      this.physics.add.overlap(this.player,this.coinGroup,collectCoin, null,this);
       this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
+        //coinScore += 1;
         this.tweens.add({
           targets: coin,
           y: coin.y - 100,
@@ -438,7 +446,7 @@
             this.block2Pool.remove(block2);
 
           } else {
-            let block2 = this.physics.add.sprite(posX, posY - 141, "block2");
+            let block2 = this.physics.add.sprite(posX, posY - 145, "block2");
             block2.setImmovable(true);
             block2.setVelocityX(platform.body.velocity.x);
             block2.setDepth(2);
@@ -473,35 +481,8 @@
             }
           }
         }
-
-
       }
     }
-
-    /*addBlock(posX, posY) {
-      this.addedBlock++;
-      let block;
-      if (this.blockPool.getLength()) {
-        block = this.blockPool.getFirst();
-        block.x = posX;
-        block.y = posY;
-        block.alpha = 1;
-        block.active = true;
-        block.visible = true;
-        this.blockPool.remove(block);
-
-      } else {
-        let block = this.physics.add.sprite(posX, posY, 30, "block");
-        this.physics.add.existing(block);
-        block.body.setImmovable(true);
-        block.body.setVelocityX(Phaser.Math.Between(gameOptions.platformSpeedRange[0], gameOptions.platformSpeedRange[1]) * -1);
-        block.setDepth(2);
-        this.blockGroup.add(block);
-      }
-    }*/
-
-
-
     jump() {
       if (this.player.body.touching.down || (this.playerJumps > 0 && this.playerJumps < gameOptions.jumps)) {
         if (this.player.body.touching.down) {
@@ -522,6 +503,8 @@
 
     update() {
       if(this.player.x < gameOptions.playerDeadZone || this.player.y > game.config.height){
+        score = 0;
+        //this.deadFlag = true;
         this.scene.start("PlayGame");
       }
      // this.player.x = gameOptions.playerStartPosition;
@@ -551,47 +534,6 @@
         }
       }, this);
 
-      /*let minBlockDistance = game.config.width;
-      let rightmostBlockHeight = 0;
-      this.blockGroup.getChildren().forEach(function (block) {
-        let blockDistance = game.config.width - block.x - block.displayWidth / 2;
-        if (blockDistance < minBlockDistance) {
-          minBlockDistance = blockDistance;
-          rightmostBlockHeight = block.y;
-        }
-        if (block.x < -block.displayWidth / 2) {
-          this.blockGroup.killAndHide(block);
-          this.blockGroup.remove(block);
-        }
-      }, this);
-
-      let minBlock2Distance = game.config.width;
-      let rightmostBlock2Height = 0;
-      this.block2Group.getChildren().forEach(function (block2) {
-        let block2Distance = game.config.width - block2.x - block2.displayWidth / 2;
-        if (block2Distance < minBlock2Distance) {
-          minBlock2Distance = block2Distance;
-          rightmostBlock2Height = block2.y;
-        }
-        if (block2.x < -block2.displayWidth / 2) {
-          this.block2Group.killAndHide(block2);
-          this.block2Group.remove(block2);
-        }
-      }, this);
-
-      let minBlock3Distance = game.config.width;
-      let rightmostBlock3Height = 0;
-      this.block3Group.getChildren().forEach(function (block3) {
-        let block3Distance = game.config.width - block3.x - block3.displayWidth / 2;
-        if (block3Distance < minBlock3Distance) {
-          minBlock3Distance = block3Distance;
-          rightmostBlock3Height = block3.y;
-        }
-        if (block3.x < -block3.displayWidth / 2) {
-          this.block3Group.killAndHide(block3);
-          this.block3Group.remove(block3);
-        }
-      }, this);*/
       if (minDistance > this.nextPlatformDistance) {
         let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
         let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0],
@@ -604,6 +546,14 @@
       }
     }
   }
+
+  function collectCoin(player, coinGroup)
+  {
+    coinGroup.disableBody(true,true);
+      score += 1;
+      scoreText.setText('Coin✕' + score);
+  }
+
   function resize(){
     let canvas = document.querySelector("canvas");
     let windowWidth = window.innerWidth;
