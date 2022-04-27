@@ -34,11 +34,13 @@
 
     playerGravity: 1000,
 
-    jumpForce: 650,
+    jumpForce: 480,
 
     jumpSpeed: 0,
 
     playerStartPosition: 200,
+
+    playerDeadZone: -200,
 
     jumps: 2,
 
@@ -46,11 +48,17 @@
 
     blockPercent: 40,
 
+    blockPercentSky1: 12,
+
+    blockPercentSky2: 10,
+
+    blockPercentSky3: 5,
+
     coinPosition: 95,
 
     coinPositionSky1: 300,
 
-    coinPositionSky2: 500,
+    coinPositionSky2: 400,
   }
 
   window.onload = function() {
@@ -171,17 +179,21 @@
 
       this.addedPlatforms = 0;
 
+      //this.addedBlock = 0;
+
       this.playerJumps = 0;
 
       this.addPlatform(game.config.width, game.config.width / 2, game.config.height * gameOptions.platformVerticalLimit[1]);
+
+      //this.addBlock(game.config.height * gameOptions.platformVerticalLimit[1]);
+
 
       this.player = this.physics.add.sprite(gameOptions.playerStartPosition, game.config.height * 0.7, "you")
       this.player.setGravityY(gameOptions.playerGravity);
       this.player.setDepth(2);
 
-      //this.player.setimmovable(true);
+      let coinScore = 0;
 
-      this.blockhit = false;
 
       this.platformCollider = this.physics.add.collider(this.player, this.platformGroup, function () {
 
@@ -192,7 +204,6 @@
       }, null, this);
 
       this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
-
         this.tweens.add({
           targets: coin,
           y: coin.y - 100,
@@ -200,7 +211,7 @@
           duration: 800,
           ease: "Cubic.easeOut",
           callbackScope: this,
-          onComplete: function() {
+          onComplete: function () {
             this.coinGroup.killAndHide(coin);
             this.coinGroup.remove(coin);
           }
@@ -321,7 +332,7 @@
 
         if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
           if (this.blockPool.getLength()) {
-            let block = this.blockPool.getFirst();
+            let block = this.block2Pool.getFirst();
             block.x = posX;
             block.y = posY - 96;
             block.alpha = 1;
@@ -335,9 +346,14 @@
             block.setVelocityX(platform.body.velocity.x);
             block.setDepth(2);
             this.blockGroup.add(block);
-           // this.blockGroup.body.checkCollision.left = true;
+
+            if (block.x < gameOptions.playerDeadZone) {
+              block.killAndHide(block);
+              block.remove(block);
+            }
           }
         }
+
         if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
           if (this.block2Pool.getLength()) {
             let block2 = this.block2Pool.getFirst();
@@ -353,9 +369,12 @@
             block2.setImmovable(true);
             block2.setVelocityX(platform.body.velocity.x);
             block2.setDepth(2);
-            this.blockGroup.add(block2);
-            //this.physics.add.collider(this.block2Group, staticGroup);
-            //aaa
+            this.block2Group.add(block2);
+
+            if (block2.x < gameOptions.playerDeadZone) {
+              block2.killAndHide(block2);
+              block2.remove(block2);
+            }
           }
         }
         if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercent) {
@@ -369,17 +388,118 @@
             this.block3Pool.remove(block3);
 
           } else {
-            let block3 = this.physics.add.sprite(posX, posY - 60, "block3");
+            let block3 = this.physics.add.sprite(posX, posY - 62, "block3");
             block3.setImmovable(true);
             block3.setVelocityX(platform.body.velocity.x);
             block3.setDepth(2);
-            this.blockGroup.add(block3);
-            //this.physics.add.collider(this.block3Group, staticGroup);
+            this.block3Group.add(block3);
 
+            if (block3.x < gameOptions.playerDeadZone) {
+              block3.killAndHide(block3);
+              block3.remove(block3);
+            }
           }
         }
+
+        //new
+
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercentSky1) {
+          if (this.blockPool.getLength()) {
+            let block = this.block2Pool.getFirst();
+            block.x = posX;
+            block.y = posY - 96;
+            block.alpha = 1;
+            block.active = true;
+            block.visible = true;
+            this.blockPool.remove(block);
+
+          } else {
+            let block = this.physics.add.sprite(posX, posY - 160, "block");
+            block.setImmovable(true);
+            block.setVelocityX(platform.body.velocity.x);
+            block.setDepth(2);
+            this.blockGroup.add(block);
+
+            if (block.x < gameOptions.playerDeadZone) {
+              block.killAndHide(block);
+              block.remove(block);
+            }
+          }
+        }
+
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercentSky2) {
+          if (this.block2Pool.getLength()) {
+            let block2 = this.block2Pool.getFirst();
+            block2.x = posX;
+            block2.y = posY - 96;
+            block2.alpha = 1;
+            block2.active = true;
+            block2.visible = true;
+            this.block2Pool.remove(block2);
+
+          } else {
+            let block2 = this.physics.add.sprite(posX, posY - 141, "block2");
+            block2.setImmovable(true);
+            block2.setVelocityX(platform.body.velocity.x);
+            block2.setDepth(2);
+            this.block2Group.add(block2);
+
+            if (block2.x < gameOptions.playerDeadZone) {
+              block2.killAndHide(block2);
+              block2.remove(block2);
+            }
+          }
+        }
+        if (Phaser.Math.Between(1, 100) <= gameOptions.blockPercentSky3) {
+          if (this.block3Pool.getLength()) {
+            let block3 = this.block3Pool.getFirst();
+            block3.x = posX;
+            block3.y = posY - 96;
+            block3.alpha = 1;
+            block3.active = true;
+            block3.visible = true;
+            this.block3Pool.remove(block3);
+
+          } else {
+            let block3 = this.physics.add.sprite(posX, posY - 200, "block3");
+            block3.setImmovable(true);
+            block3.setVelocityX(platform.body.velocity.x);
+            block3.setDepth(2);
+            this.block3Group.add(block3);
+
+            if (block3.x < gameOptions.playerDeadZone) {
+              block3.killAndHide(block3);
+              block3.remove(block3);
+            }
+          }
+        }
+
+
       }
     }
+
+    /*addBlock(posX, posY) {
+      this.addedBlock++;
+      let block;
+      if (this.blockPool.getLength()) {
+        block = this.blockPool.getFirst();
+        block.x = posX;
+        block.y = posY;
+        block.alpha = 1;
+        block.active = true;
+        block.visible = true;
+        this.blockPool.remove(block);
+
+      } else {
+        let block = this.physics.add.sprite(posX, posY, 30, "block");
+        this.physics.add.existing(block);
+        block.body.setImmovable(true);
+        block.body.setVelocityX(Phaser.Math.Between(gameOptions.platformSpeedRange[0], gameOptions.platformSpeedRange[1]) * -1);
+        block.setDepth(2);
+        this.blockGroup.add(block);
+      }
+    }*/
+
 
 
     jump() {
@@ -389,11 +509,9 @@
         }
 
         this.player.setVelocityY(gameOptions.jumpForce * -1);
-        this.player.setVelocityX(gameOptions.jumpSpeed);
         this.playerJumps++;
         this.player.anims.stop();
       }
-
     }
 
     run(){
@@ -403,10 +521,21 @@
     }
 
     update() {
-      if (this.player.y > game.config.height) {
+      if(this.player.x < gameOptions.playerDeadZone || this.player.y > game.config.height){
         this.scene.start("PlayGame");
       }
      // this.player.x = gameOptions.playerStartPosition;
+
+      if(this.player.body.touching.none){
+        this.player.setVelocityX(0);
+      }
+
+      if(this.player.x < gameOptions.playerStartPosition){
+        this.player.setVelocityX(300);
+        if(this.player.x >= gameOptions.playerStartPosition){
+          this.player.setVelocityX(0);
+        }
+      }
 
       let minDistance = game.config.width;
       let rightmostPlatformHeight = 0;
@@ -422,7 +551,7 @@
         }
       }, this);
 
-      let minBlockDistance = game.config.width;
+      /*let minBlockDistance = game.config.width;
       let rightmostBlockHeight = 0;
       this.blockGroup.getChildren().forEach(function (block) {
         let blockDistance = game.config.width - block.x - block.displayWidth / 2;
@@ -431,8 +560,8 @@
           rightmostBlockHeight = block.y;
         }
         if (block.x < -block.displayWidth / 2) {
-          this.platformGroup.killAndHide(block);
-          this.platformGroup.remove(block);
+          this.blockGroup.killAndHide(block);
+          this.blockGroup.remove(block);
         }
       }, this);
 
@@ -445,8 +574,8 @@
           rightmostBlock2Height = block2.y;
         }
         if (block2.x < -block2.displayWidth / 2) {
-          this.platformGroup.killAndHide(block2);
-          this.platformGroup.remove(block2);
+          this.block2Group.killAndHide(block2);
+          this.block2Group.remove(block2);
         }
       }, this);
 
@@ -459,10 +588,10 @@
           rightmostBlock3Height = block3.y;
         }
         if (block3.x < -block3.displayWidth / 2) {
-          this.platformGroup.killAndHide(block3);
-          this.platformGroup.remove(block3);
+          this.block3Group.killAndHide(block3);
+          this.block3Group.remove(block3);
         }
-      }, this);
+      }, this);*/
       if (minDistance > this.nextPlatformDistance) {
         let nextPlatformWidth = Phaser.Math.Between(gameOptions.platformSizeRange[0], gameOptions.platformSizeRange[1]);
         let platformRandomHeight = gameOptions.platformHeightScale * Phaser.Math.Between(gameOptions.platformHeightRange[0],
