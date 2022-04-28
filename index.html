@@ -46,7 +46,7 @@
 
     jumps: 2,
 
-    coinPercent: 2,
+    coinPercent: 5,
 
     blockPercent: 40,
 
@@ -210,7 +210,7 @@
       scoreText = this.add.text(30,30, 'Coin✕0', { fontSize: '40px',fill: '#000'});
 
       this.physics.add.overlap(this.player,this.coinGroup,collectCoin, null,this);
-      this.physics.add.overlap(this.player, this.coinGroup, function (player, coin) {
+      this.physics.add.overlap(this.player, this.coinGroup,function (player, coin){
         //coinScore += 1;
         this.tweens.add({
           targets: coin,
@@ -224,8 +224,7 @@
             this.coinGroup.remove(coin);
           }
         });
-
-      }, null, this);
+      },null,this);
 
 
       this.blockCollider = this.physics.add.collider(this.player, this.blockGroup, function () {
